@@ -65,3 +65,10 @@ Formato: **contexto → decisão → motivo**.
 - **Ícone** → gerado aqui com Python/Pillow (`scripts/generate_icon.py`) e o PNG 1024×1024 (RGB, sem transparência) já vai commitado; a CI não gera nada → zero chance de a compilação falhar por causa do script do ícone. Formato "single size" do asset catalog (Xcode 14+).
 - **Revisão de robustez (seção 8)** → conferido: launch screen preta + raiz preta; status bar escondida no Info.plist e na raiz; `isIdleTimerDisabled` só com o app ativo; volta ao preto ao ir para o background; nenhum texto/botão nas telas da mágica (a grade e o ponto só aparecem com modo treino/ensaio/indicador ligados); tamanhos fixos e `legibilityWeight` regular nas telas da mágica; tema escuro forçado; tudo posicionado por safe areas.
 - **Limitação conhecida** → o iOS tira uma "foto" do app ao ir para o background (usada no seletor de apps). O reset para o preto acontece nesse mesmo momento, mas não há garantia de que a foto já saia preta. Na prática: não abra o seletor de apps durante a apresentação.
+
+## Fase 6 — Documentação
+
+- **Arquivos do projeto na raiz do repositório** → o README descreve a estrutura real (sem a pasta `TimeRewind/` do exemplo da especificação).
+- **Prints no README** → as folhas de prints (`docs/img/prints-iphone-pro.jpg` e `prints-iphone-se.jpg`) vêm do artifact `screenshots-5` da CI, reduzidas para ficarem leves.
+- **Repositório público** → minutos de CI ilimitados; o README explica a diferença para um repositório privado (minutos de macOS contam ~10×, e cada push gasta ~20 min de macOS).
+- **Errou o número depois de acender** → o roteiro recomenda bloquear o iPhone (o app volta ao preto sozinho) em vez de criar um gesto de reset extra na tela de bloqueio, que poderia ser disparado sem querer.
