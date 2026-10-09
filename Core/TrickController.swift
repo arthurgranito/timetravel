@@ -38,8 +38,10 @@ final class TrickController {
     private(set) var secretInput: SecretInput
     private(set) var rewindProgress: RewindProgress?
     private(set) var configuration: TrickConfiguration
+    /// Incrementa a cada toque registrado pela entrada secreta (para o indicador visual discreto).
+    private(set) var inputFeedbackCount: Int = 0
 
-    @ObservationIgnored var onFeedback: ((TrickFeedback) -> Void)?
+    @ObservationIgnored var onFeedback: (@MainActor (TrickFeedback) -> Void)?
     let calendar: Calendar
     private let nowProvider: () -> Date
     @ObservationIgnored private var timeoutTask: Task<Void, Never>?
@@ -207,14 +209,17 @@ final class TrickController {
         case .none:
             return
         case let .tapCounted(count):
+            inputFeedbackCount += 1
             emit(.inputTap(count: count))
             scheduleTimeout()
         case let .digitRegistered(digit):
+            inputFeedbackCount += 1
             emit(.digitRegistered(digit))
             scheduleTimeout()
         case let .armed(value):
             cancelTimeout()
             state = .armed(offset: value)
+            inputFeedbackCount += 1
             AppLog.input.debug("Número armado")
             emit(.armed(value))
         case let .wake(value):

@@ -28,6 +28,8 @@ targets:
     sources:
       - path: App
       - path: Core
+      - path: Services
+      - path: Views
       - path: Resources
     settings:
       base:

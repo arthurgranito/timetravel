@@ -29,3 +29,18 @@ Formato: **contexto → decisão → motivo**.
 - **Verificação local** → `scripts/verify-core-linux.sh` compila `Core/` e roda `Tests/` com um toolchain Swift no Linux (com stubs de `os`/`CoreGraphics`) → pega erros de lógica/compilação antes de gastar um ciclo de CI. Não substitui a CI (sem SwiftUI/UIKit).
 - **Testes do controller** → métodos `async` numa classe `@MainActor` → funcionam tanto no Xcode quanto na descoberta de testes do Linux.
 - **Simulador da CI** → `scripts/pick_simulator.py` pega o runtime iOS mais novo e prefere "iPhone 15", senão o primeiro iPhone → não quebra quando a imagem do runner muda.
+
+## Fase 3 — Tela de bloqueio
+
+- **Xcode da CI** → o `macos-latest` atual usa Xcode 26.6 (SDK iOS 26.5). O app continua com deployment target iOS 17 e desenha toda a tela de bloqueio à mão, então o visual não depende do SDK.
+- **Entrada na tela preta via UIKit** → `SecretTouchSurface` (UIViewRepresentable) com `UITapGestureRecognizer`, `UILongPressGestureRecognizer` (1 dedo, 0,6s) e `UILongPressGestureRecognizer` (2 dedos, 1,5s) → o SwiftUI não tem gesto de dois dedos nem toque com coordenada + safe areas confiáveis; o UIKit dá as duas coisas. O toque simples espera o toque longo falhar (acontece no instante em que o dedo sobe, sem atraso perceptível).
+- **Posições da tela de bloqueio** → cada elemento tem uma posição padrão calculada pelo tipo de aparelho (Dynamic Island / notch / botão Home, detectado pelas safe areas) + um ajuste em pt (`LockScreenStyle`), que a calibração da Fase 4 vai editar → funciona em qualquer iPhone sem coordenadas fixas.
+- **Relógio andando** → `TimelineView(.everyMinute)`; a hora usada é `max(data do timeline, Date())` → vira exatamente na borda do minuto e nunca usa uma data atrasada quando a tela é redesenhada por outro motivo.
+- **Bateria** → ícone desenhado à mão (contorno clássico ou corpo sólido com a porcentagem), com nível e carregamento reais; verde carregando, amarelo no modo pouca energia, vermelho ≤ 20%. No simulador (nível desconhecido) mostra 100%.
+- **Lanterna** → implementada já nesta fase (toque longo de 0,35s liga/desliga a lanterna real; desliga sozinha ao sair da tela de bloqueio ou ir para o background).
+- **Efeitos do rewind (padrões)** → haptic por minuto: ligado; haptic de sucesso no fim: ligado; zoom do wallpaper: ligado; cadeado abrindo: ligado; **glitch: desligado** → uma tela de bloqueio real nunca "treme"; deixei como opção para quem quiser mais teatro.
+- **Texto "Deslize para cima para abrir"** → opcional, desligado por padrão.
+- **Reset no "live"** → toque longo de 1,5s em qualquer lugar da tela (configurável na Fase 4).
+- **Transição de acordar** → fade de 0,25s do preto para a tela de bloqueio + wallpaper 1,03 → 1,0 em 0,35s. Voltar para o preto é instantâneo (como apagar a tela).
+- **Acessibilidade** → as telas da mágica usam tamanhos fixos, `dynamicTypeSize(.large)` e `legibilityWeight = .regular` → "Texto em negrito" e tamanho de fonte do sistema não alteram nada.
+- **Preferências provisórias** → `MagicPreferences` e `LockScreenStyle` usam os valores padrão por enquanto; na Fase 4 passam a vir do `AppSettings`.

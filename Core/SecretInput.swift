@@ -25,7 +25,7 @@ enum SecretInputMode: String, CaseIterable, Identifiable {
 }
 
 /// Insets de safe area sem depender de SwiftUI/UIKit (lógica pura).
-struct CanvasInsets: Equatable {
+struct CanvasInsets: Equatable, Sendable {
     var top: CGFloat = 0
     var leading: CGFloat = 0
     var bottom: CGFloat = 0
@@ -35,7 +35,7 @@ struct CanvasInsets: Equatable {
 }
 
 /// Área da tela onde os toques acontecem.
-struct InputCanvas: Equatable {
+struct InputCanvas: Equatable, Sendable {
     var size: CGSize
     var safeAreaInsets: CanvasInsets
 
