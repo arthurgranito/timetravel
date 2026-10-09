@@ -118,8 +118,9 @@ O resumo do run (página do run, logo abaixo do gráfico) lista os prints gerado
    5. Com a opacidade em ~50%, ajuste **Relógio** (tamanho, peso, fonte, espaçamento, posição, cor), **Data**, **Barra** (status bar), **Cadeado** e **Botões** até tudo coincidir.
    6. Use **"Segure p/ ver o print"** para alternar rápido entre o real e o falso.
    7. **Concluir**. Tudo é salvo automaticamente.
-6. **Ensaiar**: no fim das configurações, **Ensaiar agora** sorteia um número e mostra a grade para você treinar a entrada inteira.
-7. **Concluir** (canto superior direito) volta para a tela preta.
+6. **Rewind → Ritmo**: escolha como o relógio volta. **Ritmo fixo** (padrão, 1 minuto por segundo, ajustável de 0,5s a 5s), **Passo a passo** (sempre 1 minuto por segundo, para contar junto com a plateia) ou **Duração total** (o rewind inteiro em X segundos, com aceleração). Em todos, o relógio termina exatamente na hora real.
+7. **Ensaiar**: no fim das configurações, **Ensaiar agora** sorteia um número e mostra a grade para você treinar a entrada inteira.
+8. **Concluir** (canto superior direito) volta para a tela preta.
 
 ## 8. Resumo dos gestos
 

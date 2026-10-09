@@ -31,11 +31,32 @@ O segredo: a tela de bloqueio é falsa e mostra **hora real + N**. O "voltar no 
    Para quem vê, você só tocou na tela para "acordar" o celular. Com o haptic **leve** (padrão), você sente uma batidinha confirmando. Se escolher **"uma batida por unidade"**, sente N batidas e confirma o número só pelo tato.
 4. **Acenda**: toque de novo **em qualquer lugar**. Aparece a tela de bloqueio, mostrando a hora **N minutos à frente**. Ninguém repara, porque ninguém sabe a hora exata de cabeça.
 5. **Crie suspense**. Fale do número, do tempo, da "teimosia do tempo". Pode demorar o quanto quiser: o relógio falso continua andando normalmente.
-6. **"Desbloqueie"**: faça um **swipe para cima** começando na metade de baixo da tela. O cadeado abre e o relógio começa a **voltar**, minuto a minuto, com uma batidinha a cada minuto.
+6. **"Desbloqueie"**: faça um **swipe para cima** começando na metade de baixo da tela. O cadeado abre e o relógio começa a **voltar**, minuto a minuto, com uma batidinha a cada minuto. No modo padrão (**Ritmo fixo**, 1 segundo por minuto) voltar 8 minutos leva 8 segundos.
 7. Quando parar, o relógio está **exatamente na hora real** e continua andando normalmente, para sempre.
 8. **Revelação**: *"Confiram os celulares de vocês."* Todo mundo vê a mesma hora.
 
 Para uma nova apresentação: **segure 1,5s** em qualquer lugar da tela para voltar ao preto.
+
+### Ritmo do rewind (Configurações → Rewind → Ritmo)
+
+| Modo | Como o relógio desce | Quando usar |
+|---|---|---|
+| **Ritmo fixo** (padrão) | 1 minuto a cada X segundos (0,5s a 5s; padrão 1s) | o mais versátil: rápido para impacto, lento para suspense |
+| **Passo a passo** | 1 minuto por segundo, sempre | para **contar junto com a plateia** (ver abaixo) |
+| **Duração total** | o rewind inteiro leva X segundos, começando devagar, acelerando e freando no fim | efeito "cinematográfico", rápido, para números grandes |
+
+Em todos os modos o relógio **termina exatamente na hora real**: se o minuto virar durante o rewind, ele simplesmente para um minuto antes, já na hora certa.
+
+### Dicas de fala para o Passo a passo
+
+O ritmo de 1 minuto por segundo é previsível, então dá para **narrar cada passo** como se você estivesse puxando o tempo para trás.
+
+- **Conte em voz alta junto com o relógio**, de trás para frente: *"Oito… sete… seis…"*. A plateia começa a contar junto sem você pedir.
+- **Convide a pessoa que escolheu o número** a contar: *"Conta comigo: cada número que você falar é um minuto que a gente devolve."* Ela vira cúmplice do efeito.
+- **Use o ritmo como hipnose**: fale devagar, no compasso das batidinhas do haptic. *"Sente? Cada batida é um minuto voltando."* (O haptic é só seu, mas a frase cria a imagem.)
+- **Para números grandes** (modo B ou C, ex.: 25), não conte tudo: conte os primeiros, depois fale por cima (*"…e o tempo vai voltando, voltando…"*) e retome a contagem nos últimos 3: *"Três… dois… um."*
+- **Termine no "um" e pare de falar**. Quando o relógio para, deixe um segundo de silêncio antes do *"Confiram os celulares de vocês."*
+- Se o minuto real virar no meio, o relógio termina um passo antes do que você contava. Não corrija em voz alta: só pare e siga para a revelação. A hora está certa.
 
 ### Outros modos de entrada
 
