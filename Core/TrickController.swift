@@ -23,7 +23,11 @@ struct TrickConfiguration: Equatable {
     /// Inatividade (s) que zera uma entrada parcial (modos B e C). 0 = desligado.
     var inputTimeout: TimeInterval = 5
     var gridVerticalMargin: CGFloat = SecretGridLayout.defaultVerticalMargin
+    var rewindPacing: RewindPacing = .fixedRhythm
+    /// Usado no modo "Duração total".
     var rewindDuration: TimeInterval = RewindPlanner.defaultDuration
+    /// Usado no modo "Ritmo fixo".
+    var secondsPerMinute: TimeInterval = RewindPlanner.defaultSecondsPerMinute
     /// Dispara o rewind sozinho X segundos depois de acender. nil = desligado.
     var autoRewindDelay: TimeInterval? = nil
     /// Volta para o preto quando o app vai para o background.
@@ -146,7 +150,12 @@ final class TrickController {
         guard case let .lockScreen(offset) = state else { return }
         cancelAutoRewind()
         let now = nowProvider()
-        let intervals = RewindPlanner.intervals(steps: offset, totalDuration: configuration.rewindDuration)
+        let intervals = RewindPlanner.intervals(
+            steps: offset,
+            pacing: configuration.rewindPacing,
+            totalDuration: configuration.rewindDuration,
+            secondsPerMinute: configuration.secondsPerMinute
+        )
         let progress = RewindProgress(startedAt: now, offsetMinutes: offset, intervals: intervals, calendar: calendar)
         rewindProgress = progress
         state = .rewinding(from: offset)

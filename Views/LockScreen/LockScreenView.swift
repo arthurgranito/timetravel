@@ -133,7 +133,8 @@ struct LockScreenView: View {
                 }
             }
             if preferences.effects.wallpaperZoom {
-                let duration = RewindPlanner.effectiveDuration(controller.configuration.rewindDuration)
+                let planned = controller.rewindProgress?.intervals.reduce(0, +) ?? RewindPlanner.defaultDuration
+                let duration = max(planned, 0.3)
                 withAnimation(.easeInOut(duration: duration)) {
                     rewindZoom = 1.04
                 }

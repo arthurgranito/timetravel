@@ -207,9 +207,30 @@ struct SettingsView: View {
                     Text("Começar \(Int(settings.data.preferences.autoRewindDelay))s depois de acender")
                 }
             }
-            VStack(alignment: .leading) {
-                Text("Duração: \(String(format: "%.1f", settings.data.rewindDuration))s")
-                Slider(value: $settings.data.rewindDuration, in: RewindPlanner.minimumDuration...10, step: 0.1)
+            Picker("Ritmo", selection: $settings.data.rewindPacing) {
+                ForEach(RewindPacing.allCases) { pacing in
+                    Text(pacing.label).tag(pacing)
+                }
+            }
+            switch settings.data.rewindPacing {
+            case .totalDuration:
+                VStack(alignment: .leading) {
+                    Text("Duração total: \(String(format: "%.1f", settings.data.rewindDuration))s")
+                    Slider(value: $settings.data.rewindDuration, in: RewindPlanner.minimumDuration...10, step: 0.1)
+                }
+            case .fixedRhythm:
+                VStack(alignment: .leading) {
+                    Text("Segundos por minuto: \(String(format: "%.1f", settings.data.secondsPerMinute))s")
+                    Slider(
+                        value: $settings.data.secondsPerMinute,
+                        in: RewindPlanner.secondsPerMinuteRange,
+                        step: 0.1
+                    )
+                }
+            case .stepByStep:
+                Text("Um minuto por segundo, sempre no mesmo ritmo. Bom para contar junto com a plateia.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
             Toggle("Haptic a cada minuto", isOn: $settings.data.preferences.haptics.rewindSteps)
             Toggle("Haptic ao terminar", isOn: $settings.data.preferences.haptics.rewindFinish)

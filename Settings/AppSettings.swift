@@ -34,7 +34,9 @@ struct AppSettingsData: Equatable {
     var inputMode: SecretInputMode = .grid
     /// Inatividade (s) que zera uma entrada parcial nos modos B e C.
     var inputTimeout: TimeInterval = 5
+    var rewindPacing: RewindPacing = .fixedRhythm
     var rewindDuration: TimeInterval = RewindPlanner.defaultDuration
+    var secondsPerMinute: TimeInterval = RewindPlanner.defaultSecondsPerMinute
     var returnToDarkOnBackground: Bool = true
     var settingsGesture: SettingsGesture = .threeTwoFingerTaps
 
@@ -43,7 +45,9 @@ struct AppSettingsData: Equatable {
         var configuration = TrickConfiguration()
         configuration.inputMode = inputMode
         configuration.inputTimeout = inputTimeout
+        configuration.rewindPacing = rewindPacing
         configuration.rewindDuration = rewindDuration
+        configuration.secondsPerMinute = secondsPerMinute
         configuration.autoRewindDelay = preferences.rewindTrigger == .automatic ? preferences.autoRewindDelay : nil
         configuration.returnToDarkOnBackground = returnToDarkOnBackground
         return configuration
@@ -90,7 +94,8 @@ final class AppSettings {
 
 extension AppSettingsData: Codable {
     enum CodingKeys: String, CodingKey {
-        case style, preferences, inputMode, inputTimeout, rewindDuration, returnToDarkOnBackground, settingsGesture
+        case style, preferences, inputMode, inputTimeout, rewindPacing, rewindDuration, secondsPerMinute
+        case returnToDarkOnBackground, settingsGesture
     }
 
     init(from decoder: Decoder) throws {
@@ -101,7 +106,9 @@ extension AppSettingsData: Codable {
         preferences = container.value(.preferences, default: fallback.preferences)
         inputMode = container.value(.inputMode, default: fallback.inputMode)
         inputTimeout = container.value(.inputTimeout, default: fallback.inputTimeout)
+        rewindPacing = container.value(.rewindPacing, default: fallback.rewindPacing)
         rewindDuration = container.value(.rewindDuration, default: fallback.rewindDuration)
+        secondsPerMinute = container.value(.secondsPerMinute, default: fallback.secondsPerMinute)
         returnToDarkOnBackground = container.value(.returnToDarkOnBackground, default: fallback.returnToDarkOnBackground)
         settingsGesture = container.value(.settingsGesture, default: fallback.settingsGesture)
     }

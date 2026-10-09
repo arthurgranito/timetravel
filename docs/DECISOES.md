@@ -72,3 +72,12 @@ Formato: **contexto → decisão → motivo**.
 - **Prints no README** → as folhas de prints (`docs/img/prints-iphone-pro.jpg` e `prints-iphone-se.jpg`) vêm do artifact `screenshots-5` da CI, reduzidas para ficarem leves.
 - **Repositório público** → minutos de CI ilimitados; o README explica a diferença para um repositório privado (minutos de macOS contam ~10×, e cada push gasta ~20 min de macOS).
 - **Errou o número depois de acender** → o roteiro recomenda bloquear o iPhone (o app volta ao preto sozinho) em vez de criar um gesto de reset extra na tela de bloqueio, que poderia ser disparado sem querer.
+
+## Mudança — modos de ritmo do rewind
+
+- **Três modos** (`RewindPacing`): **Ritmo fixo** (padrão; 1 minuto a cada X segundos, X de 0,5 a 5, padrão 1s), **Passo a passo** (sempre 1 minuto por segundo, sem ajuste) e **Duração total** (o modo original, com curva lenta–rápida–lenta).
+- **Passo a passo automático** → confirmado com você: desce sozinho, 1 minuto por segundo, travado. É deliberadamente igual ao Ritmo fixo em 1s, mas não muda se você mexer no slider do ritmo fixo → bom para decorar uma contagem.
+- **Ritmo fixo vira o padrão** → configurações já salvas de versões anteriores não têm o campo `rewindPacing`; a decodificação tolerante usa o padrão novo (Ritmo fixo, 1s). A duração total que você tinha escolhido continua salva, caso volte para aquele modo.
+- **Alvo dinâmico** → todos os modos usam o mesmo `RewindProgress`: o relógio desce 1 minuto por passo e nunca fica abaixo da hora real do momento; quando encosta nela, termina. Num rewind lento (ex.: 59 minutos a 5s cada, ~5 min), o minuto real vira várias vezes e o rewind termina alguns passos antes, sempre na hora certa e sem repetir números.
+- **Zoom do wallpaper** → dura a soma dos intervalos planejados do rewind (antes usava a duração total fixa).
+- **Toques depois do fim** → no estado live, toques e gatilhos não fazem nada (só o toque longo de reset, se ligado).

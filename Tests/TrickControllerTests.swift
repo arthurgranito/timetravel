@@ -16,9 +16,16 @@ final class TrickControllerTests: XCTestCase {
     private let calendar = TestSupport.calendar("America/Sao_Paulo")
     private let canvas = TestSupport.devices[2].canvas
 
-    private func makeController(mode: SecretInputMode = .grid, clock: TestClock) -> TrickController {
+    private func makeController(
+        mode: SecretInputMode = .grid,
+        pacing: RewindPacing = .totalDuration,
+        secondsPerMinute: TimeInterval = 1,
+        clock: TestClock
+    ) -> TrickController {
         var configuration = TrickConfiguration()
         configuration.inputMode = mode
+        configuration.rewindPacing = pacing
+        configuration.secondsPerMinute = secondsPerMinute
         configuration.rewindDuration = 1.2
         return TrickController(configuration: configuration, calendar: calendar, now: { clock.now })
     }
@@ -116,5 +123,58 @@ final class TrickControllerTests: XCTestCase {
         XCTAssertEqual(controller.state, .live)
         XCTAssertEqual(controller.displayedMinute(now: clock.now), TestSupport.date(calendar, 2026, 10, 8, 14, 3))
         XCTAssertNil(controller.rewindProgress)
+    }
+
+    func testDefaultPacingIsFixedRhythm() async {
+        XCTAssertEqual(TrickConfiguration().rewindPacing, .fixedRhythm)
+        XCTAssertEqual(TrickConfiguration().secondsPerMinute, 1, accuracy: 0.0001)
+    }
+
+    func testFixedRhythmRewindEndsLiveAtRealTime() async throws {
+        let clock = TestClock(TestSupport.date(calendar, 2026, 10, 8, 14, 3, 10))
+        let controller = makeController(pacing: .fixedRhythm, secondsPerMinute: 0.5, clock: clock)
+        controller.handleTap(at: TestSupport.center(of: 2, canvas: canvas, rows: 3), in: canvas)
+        controller.handleTap(at: CGPoint(x: 10, y: 400), in: canvas)
+        controller.triggerRewind()
+        XCTAssertEqual(controller.rewindProgress?.intervals, [0.5, 0.5])
+
+        try await waitUntilLive(controller)
+        XCTAssertEqual(controller.state, .live)
+        XCTAssertEqual(controller.displayedMinute(now: clock.now), TestSupport.date(calendar, 2026, 10, 8, 14, 3))
+    }
+
+    func testStepByStepRewindEndsLiveAndIgnoresExtraTaps() async throws {
+        let clock = TestClock(TestSupport.date(calendar, 2026, 10, 8, 14, 3, 10))
+        let controller = makeController(pacing: .stepByStep, secondsPerMinute: 4, clock: clock)
+        var steps = 0
+        controller.onFeedback = { feedback in
+            if feedback == .rewindStep {
+                steps += 1
+            }
+        }
+        controller.handleTap(at: TestSupport.center(of: 2, canvas: canvas, rows: 3), in: canvas)
+        controller.handleTap(at: CGPoint(x: 10, y: 400), in: canvas)
+        controller.triggerRewind()
+        // Passo a passo ignora o "segundos por minuto" do ritmo fixo: sempre 1s.
+        XCTAssertEqual(controller.rewindProgress?.intervals, [1, 1])
+
+        try await waitUntilLive(controller)
+        XCTAssertEqual(controller.state, .live)
+        XCTAssertEqual(steps, 1)
+        XCTAssertEqual(controller.displayedMinute(now: clock.now), TestSupport.date(calendar, 2026, 10, 8, 14, 3))
+
+        // Toques e gatilhos extras depois do fim não mudam nada.
+        controller.handleTap(at: CGPoint(x: 10, y: 400), in: canvas)
+        controller.triggerRewind()
+        XCTAssertEqual(controller.state, .live)
+        XCTAssertEqual(controller.displayedMinute(now: clock.now), TestSupport.date(calendar, 2026, 10, 8, 14, 3))
+    }
+
+    private func waitUntilLive(_ controller: TrickController, timeout: TimeInterval = 6) async throws {
+        var waited: TimeInterval = 0
+        while controller.state != .live && waited < timeout {
+            try await Task.sleep(nanoseconds: 50_000_000)
+            waited += 0.05
+        }
     }
 }
