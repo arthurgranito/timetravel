@@ -5,6 +5,8 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var settings: AppSettings
     let wallpapers: WallpaperStore
+    /// Usado pelo estado de demonstração "calibration".
+    var opensCalibrationOnAppear: Bool = false
     let onRehearse: @MainActor () -> Void
     let onClose: @MainActor () -> Void
 
@@ -35,6 +37,11 @@ struct SettingsView: View {
         }
         .fullScreenCover(isPresented: $showsCalibration) {
             CalibrationView(settings: settings, wallpapers: wallpapers)
+        }
+        .onAppear {
+            if opensCalibrationOnAppear {
+                showsCalibration = true
+            }
         }
         .onChange(of: wallpaperItem) { _, item in
             loadWallpaper(item)

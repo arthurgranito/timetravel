@@ -108,7 +108,7 @@ jobs:
       - name: Rodar testes
         run: |
           set -o pipefail
-          UDID=$(python3 scripts/pick_simulator.py "iPhone 15")
+          UDID=$(python3 scripts/pick_simulator.py "Pro")
           xcodebuild test -project TimeRewind.xcodeproj -scheme TimeRewind -configuration Debug \
             -destination "id=$UDID" \
             -derivedDataPath build-tests \
@@ -133,6 +133,81 @@ jobs:
               grep -nE "error:|failed|FAILED" test.log | head -80 || echo "Nenhuma linha de erro encontrada no test.log."
             else
               echo "test.log não existe (a falha aconteceu antes do xcodebuild test)."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  screenshots:
+    name: Screenshots (simulador)
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      - name: Gerar projeto
+        run: xcodegen generate
+
+      - name: Build para simulador
+        run: |
+          set -o pipefail
+          xcodebuild -project TimeRewind.xcodeproj -scheme TimeRewind -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build-sim \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee screenshots-build.log
+
+      - name: Prints no iPhone grande
+        run: |
+          UDID=$(python3 scripts/pick_simulator.py "Pro")
+          scripts/take_screenshots.sh "$UDID" "iphone-pro" build-sim/Build/Products/Debug-iphonesimulator/TimeRewind.app screenshots
+
+      - name: Prints no iPhone SE (se disponível)
+        continue-on-error: true
+        run: |
+          if UDID=$(python3 scripts/pick_simulator.py "SE" --strict --create); then
+            scripts/take_screenshots.sh "$UDID" "iphone-se" build-sim/Build/Products/Debug-iphonesimulator/TimeRewind.app screenshots
+          else
+            echo "Nenhum simulador de iPhone SE neste runner; pulando." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Listar prints
+        if: always()
+        run: |
+          {
+            echo "## Screenshots"
+            ls -1 screenshots 2>/dev/null | sed 's/^/- /' || echo "Nenhum print gerado."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ github.run_number }}
+          path: screenshots
+          if-no-files-found: warn
+
+      - name: Upload log do build
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-build-log-${{ github.run_number }}
+          path: screenshots-build.log
+          if-no-files-found: ignore
+
+      - name: Resumo de erros
+        if: failure()
+        run: |
+          {
+            echo "## Erros no job de screenshots"
+            echo '```'
+            if [ -f screenshots-build.log ]; then
+              grep -n "error:" screenshots-build.log | head -50 || echo "Nenhuma linha com 'error:' no log do build."
+            else
+              echo "Log do build não existe (a falha aconteceu antes do xcodebuild)."
             fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

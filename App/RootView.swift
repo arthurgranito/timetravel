@@ -5,7 +5,7 @@ import UIKit
 struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
-    @State private var controller = TrickController()
+    @State private var controller = DemoStateLauncher.makeController()
     @State private var settings = AppSettings()
     @State private var wallpapers = WallpaperStore()
     @State private var haptics = Haptics()
@@ -23,6 +23,7 @@ struct RootView: View {
                 SettingsView(
                     settings: settings,
                     wallpapers: wallpapers,
+                    opensCalibrationOnAppear: DemoLaunch.current?.opensCalibration ?? false,
                     onRehearse: {
                         startRehearsal()
                     },
@@ -94,7 +95,7 @@ struct RootView: View {
     /// No ensaio, a grade fica visível mesmo com o modo treino desligado.
     private var darkScreenPreferences: MagicPreferences {
         var preferences = settings.data.preferences
-        if rehearsalNumber != nil {
+        if rehearsalNumber != nil || DemoLaunch.current?.showsGrid == true {
             preferences.showsTrainingGrid = true
         }
         return preferences

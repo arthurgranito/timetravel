@@ -55,3 +55,13 @@ Formato: **contexto → decisão → motivo**.
 - **Desenho compartilhado** → `LockScreenCanvas` desenha a tela de bloqueio para um minuto qualquer; a mágica e a calibração usam exatamente o mesmo código → o que você calibra é o que aparece na apresentação.
 - **Ensaiar** → sorteia um número dentro da faixa do modo atual, fecha as configurações e mostra a grade com "ENSAIO · faça o N" na tela preta; a grade some quando o rewind termina.
 - **Tema das configurações** → também escuro (o app inteiro é forçado no escuro), e sem status bar.
+
+## Fase 5 — Screenshots e polimento
+
+- **Estados de demonstração** → `-demoState …` lido dos argumentos do processo pelo `DemoStateLauncher`, **só em builds Debug** (no Release/.ipa o parser devolve sempre nil) → nenhuma chance de um argumento estranho mudar o app na apresentação.
+- **`-demoTime`** → é a hora **real** simulada, congelada (segundos = 5). No estado `lock` a tela mostra `demoTime + demoOffset` (ex.: 14:30 + 8 = 14:38). O `rewinding-mid` mostra o rewind parado na metade (14:34 para N = 8). Padrões: offset 8; hora 14:30 (14:22 no `live`).
+- **Hora congelada** → o `TrickController` ganhou `frozenNow` (nil no uso normal) e `clockDate(timelineDate:)`, que a tela de bloqueio usa para decidir a hora real de cada redesenho.
+- **Simuladores dos prints** → o iPhone "Pro" de nome mais curto no runtime iOS mais novo; o iPhone SE é procurado e, se não existir, o script tenta criar um. Se nem isso der, o passo do SE é pulado sem falhar o job (aviso no resumo).
+- **Ícone** → gerado aqui com Python/Pillow (`scripts/generate_icon.py`) e o PNG 1024×1024 (RGB, sem transparência) já vai commitado; a CI não gera nada → zero chance de a compilação falhar por causa do script do ícone. Formato "single size" do asset catalog (Xcode 14+).
+- **Revisão de robustez (seção 8)** → conferido: launch screen preta + raiz preta; status bar escondida no Info.plist e na raiz; `isIdleTimerDisabled` só com o app ativo; volta ao preto ao ir para o background; nenhum texto/botão nas telas da mágica (a grade e o ponto só aparecem com modo treino/ensaio/indicador ligados); tamanhos fixos e `legibilityWeight` regular nas telas da mágica; tema escuro forçado; tudo posicionado por safe areas.
+- **Limitação conhecida** → o iOS tira uma "foto" do app ao ir para o background (usada no seletor de apps). O reset para o preto acontece nesse mesmo momento, mas não há garantia de que a foto já saia preta. Na prática: não abra o seletor de apps durante a apresentação.

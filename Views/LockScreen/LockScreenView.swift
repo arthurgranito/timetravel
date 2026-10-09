@@ -28,7 +28,7 @@ struct LockScreenView: View {
         let layout = LockScreenLayout(metrics: metrics, style: style)
 
         TimelineView(.everyMinute) { context in
-            let now = max(context.date, Date())
+            let now = controller.clockDate(timelineDate: context.date)
             LockScreenCanvas(
                 shownMinute: controller.displayedMinute(now: now),
                 calendar: controller.calendar,
@@ -63,6 +63,10 @@ struct LockScreenView: View {
         .gesture(liveResetGesture)
         .onAppear {
             battery.start()
+            // Se a tela já aparece depois do desbloqueio (ex.: estados de demonstração), o cadeado já está aberto.
+            if preferences.effects.padlockOpens && (isRewinding || state == .live) {
+                isPadlockOpen = true
+            }
             withAnimation(.easeOut(duration: 0.35)) {
                 wakeScale = 1.0
             }

@@ -41,8 +41,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
-        # Ícone entra na Fase 5. Vazio = o build nunca falha por falta de ícone.
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        # Ícone 1024x1024 único (gerado por scripts/generate_icon.py e já commitado).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
     info:
       path: Supporting/Info.plist

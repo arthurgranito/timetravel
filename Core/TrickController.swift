@@ -43,6 +43,8 @@ final class TrickController {
 
     @ObservationIgnored var onFeedback: (@MainActor (TrickFeedback) -> Void)?
     let calendar: Calendar
+    /// Hora congelada (só nos estados de demonstração usados pelos screenshots da CI).
+    let frozenNow: Date?
     private let nowProvider: () -> Date
     @ObservationIgnored private var timeoutTask: Task<Void, Never>?
     @ObservationIgnored private var rewindTask: Task<Void, Never>?
@@ -51,10 +53,12 @@ final class TrickController {
     init(
         configuration: TrickConfiguration = TrickConfiguration(),
         calendar: Calendar = .autoupdatingCurrent,
-        now: @escaping () -> Date = { Date() }
+        now: @escaping () -> Date = { Date() },
+        frozenNow: Date? = nil
     ) {
         self.configuration = configuration
         self.calendar = calendar
+        self.frozenNow = frozenNow
         self.nowProvider = now
         self.secretInput = SecretInput(mode: configuration.inputMode, verticalMargin: configuration.gridVerticalMargin)
     }
@@ -81,6 +85,15 @@ final class TrickController {
         case .dark, .armed, .live, .settings:
             return TimeEngine.truncatedToMinute(now, calendar: calendar)
         }
+    }
+
+    /// Hora real a usar num redesenho do relógio: a do TimelineView ou a atual, a que for mais nova
+    /// (nunca uma data atrasada), ou a hora congelada da demonstração.
+    func clockDate(timelineDate: Date) -> Date {
+        if let frozenNow {
+            return frozenNow
+        }
+        return max(timelineDate, nowProvider())
     }
 
     /// Layout da grade para o modo atual (usado pelo modo treino).
@@ -200,6 +213,14 @@ final class TrickController {
         rewindProgress = nil
         state = .dark
         AppLog.trick.debug("Reset para o preto")
+    }
+
+    /// Força um estado sem animação nem tarefas (só para os estados de demonstração).
+    func applyDemoState(_ newState: TrickState, rewindProgress progress: RewindProgress? = nil) {
+        cancelAllTasks()
+        _ = secretInput.handle(.reset)
+        rewindProgress = progress
+        state = newState
     }
 
     // MARK: - Internos
