@@ -1,0 +1,87 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ipa:
+    name: Build IPA (sem assinatura)
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Diagnóstico do Xcode
+        run: |
+          xcodebuild -version
+          echo "Xcodes disponíveis:"
+          ls /Applications | grep Xcode || true
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      - name: Gerar projeto
+        run: xcodegen generate
+
+      - name: Build Release (iphoneos, sem assinatura)
+        run: |
+          set -o pipefail
+          xcodebuild -project TimeRewind.xcodeproj -scheme TimeRewind -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tee build.log
+
+      - name: Empacotar IPA
+        run: |
+          set -e
+          APP_PATH="build/Build/Products/Release-iphoneos/TimeRewind.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App não encontrado em $APP_PATH"
+            ls -la build/Build/Products/Release-iphoneos || true
+            exit 1
+          fi
+          rm -rf Payload TimeRewind.ipa
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qry TimeRewind.ipa Payload
+          ls -lh TimeRewind.ipa
+          echo "### IPA gerado: TimeRewind-${{ github.run_number }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: TimeRewind-${{ github.run_number }}
+          path: TimeRewind.ipa
+          if-no-files-found: error
+
+      - name: Upload build.log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.run_number }}
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: Resumo de erros
+        if: failure()
+        run: |
+          {
+            echo "## Erros de compilação"
+            echo '```'
+            if [ -f build.log ]; then
+              grep -n "error:" build.log | head -50 || echo "Nenhuma linha com 'error:' encontrada no build.log."
+            else
+              echo "build.log não existe (a falha aconteceu antes do xcodebuild)."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

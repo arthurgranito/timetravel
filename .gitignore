@@ -1,0 +1,17 @@
+# Xcode / XcodeGen (o projeto é gerado na CI)
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+Payload/
+*.ipa
+build.log
+test.log
+
+# Info.plist é gerado pelo XcodeGen a partir do project.yml
+Supporting/Info.plist
+
+# Sistema
+.DS_Store
+Thumbs.db
