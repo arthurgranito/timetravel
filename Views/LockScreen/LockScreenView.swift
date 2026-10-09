@@ -2,8 +2,8 @@ import Combine
 import SwiftUI
 import UIKit
 
-/// Tela de bloqueio falsa: wallpaper, status bar, cadeado, data, relógio e botões.
-/// Mostra real + N no estado lockScreen, anima no rewinding e fica sincronizada no live.
+/// Tela de bloqueio da mágica: mostra real + N no estado lockScreen,
+/// anima no rewinding e fica sincronizada com a hora real no live.
 struct LockScreenView: View {
     let controller: TrickController
     let style: LockScreenStyle
@@ -29,8 +29,33 @@ struct LockScreenView: View {
 
         TimelineView(.everyMinute) { context in
             let now = max(context.date, Date())
-            let shown = controller.displayedMinute(now: now)
-            content(shown: shown, layout: layout, isRewinding: isRewinding)
+            LockScreenCanvas(
+                shownMinute: controller.displayedMinute(now: now),
+                calendar: controller.calendar,
+                style: style,
+                wallpaper: wallpaper,
+                metrics: metrics,
+                battery: battery,
+                isPadlockOpen: isPadlockOpen,
+                isRewinding: isRewinding,
+                wallpaperScale: wakeScale * rewindZoom,
+                clockOffset: glitchOffset,
+                clockOpacity: glitchOpacity,
+                showsUnlockHint: style.showsUnlockHint && isLockedState(state),
+                torchIsOn: torch.isOn,
+                onClockDoubleTap: {
+                    if preferences.rewindTrigger == .doubleTapClock {
+                        controller.triggerRewind()
+                    }
+                },
+                onTorch: {
+                    haptics.tap()
+                    torch.toggle()
+                },
+                onCamera: {
+                    haptics.tap()
+                }
+            )
         }
         .frame(width: metrics.size.width, height: metrics.size.height)
         .contentShape(Rectangle())
@@ -71,103 +96,6 @@ struct LockScreenView: View {
         )
         .receive(on: DispatchQueue.main)
         .eraseToAnyPublisher()
-    }
-
-    // MARK: - Camadas
-
-    @ViewBuilder
-    private func content(shown: Date, layout: LockScreenLayout, isRewinding: Bool) -> some View {
-        let calendar = controller.calendar
-        let timeText = TimeEngine.timeString(for: shown, calendar: calendar, options: style.clockFormat)
-        let dateText = TimeEngine.dateString(for: shown, calendar: calendar, options: style.dateFormat)
-        let centerX = metrics.size.width / 2
-
-        ZStack {
-            wallpaperLayer
-
-            FakeStatusBar(style: style, battery: battery, sidePadding: layout.statusBarSidePadding)
-                .frame(width: metrics.size.width)
-                .position(x: centerX, y: layout.statusBarCenterY)
-
-            if style.showsPadlock {
-                PadlockView(isOpen: isPadlockOpen, size: style.padlockSize)
-                    .position(x: centerX, y: layout.padlockCenterY)
-            }
-
-            LockDateView(text: dateText, style: style)
-                .position(x: centerX, y: layout.dateCenterY)
-
-            LockClockView(
-                text: timeText,
-                style: style,
-                countsDown: isRewinding,
-                animationDuration: isRewinding ? 0.2 : 0.35
-            )
-            .offset(x: glitchOffset)
-            .opacity(glitchOpacity)
-            .padding(16)
-            .contentShape(Rectangle())
-            .onTapGesture(count: 2) {
-                if preferences.rewindTrigger == .doubleTapClock {
-                    controller.triggerRewind()
-                }
-            }
-            .position(x: centerX, y: layout.clockCenterY)
-
-            QuickActionButton(
-                systemImage: torch.isOn ? "flashlight.on.fill" : "flashlight.off.fill",
-                size: style.quickButtonSize,
-                isActive: torch.isOn
-            )
-            .onLongPressGesture(minimumDuration: 0.35) {
-                haptics.tap()
-                torch.toggle()
-            }
-            .position(x: layout.quickButtonInset, y: layout.quickButtonCenterY)
-
-            QuickActionButton(systemImage: "camera.fill", size: style.quickButtonSize)
-                .onLongPressGesture(minimumDuration: 0.35) {
-                    haptics.tap()
-                }
-                .position(x: metrics.size.width - layout.quickButtonInset, y: layout.quickButtonCenterY)
-
-            if style.showsUnlockHint && isLockedState(controller.state) {
-                UnlockHintView()
-                    .position(x: centerX, y: layout.unlockHintCenterY)
-                    .allowsHitTesting(false)
-            }
-        }
-        .frame(width: metrics.size.width, height: metrics.size.height)
-    }
-
-    private var wallpaperLayer: some View {
-        ZStack {
-            Group {
-                if let wallpaper {
-                    Image(uiImage: wallpaper)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.16, green: 0.17, blue: 0.22),
-                            Color(red: 0.07, green: 0.07, blue: 0.10),
-                            Color(red: 0.02, green: 0.02, blue: 0.03)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                }
-            }
-            .frame(width: metrics.size.width, height: metrics.size.height)
-            .scaleEffect(wakeScale * rewindZoom)
-            .clipped()
-
-            Color.black.opacity(min(max(style.wallpaperDim, 0), 0.3))
-        }
-        .frame(width: metrics.size.width, height: metrics.size.height)
-        .clipped()
-        .allowsHitTesting(false)
     }
 
     // MARK: - Gestos

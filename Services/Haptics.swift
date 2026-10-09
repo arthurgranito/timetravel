@@ -1,7 +1,7 @@
 import UIKit
 
 /// Como a entrada secreta confirma o número pelo tato.
-enum SecretHapticMode: String, CaseIterable, Identifiable {
+enum SecretHapticMode: String, CaseIterable, Identifiable, Codable {
     case none
     case light
     /// N batidas leves (no modo C: dezena e depois unidade; 0 = uma batida rígida).
@@ -110,5 +110,23 @@ final class Haptics {
                 }
             }
         }
+    }
+}
+
+// MARK: - Codable tolerante (campos ausentes usam o padrão)
+
+extension HapticPreferences: Codable {
+    enum CodingKeys: String, CodingKey {
+        case secretMode, tapCountTicks, rewindSteps, rewindFinish
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = HapticPreferences()
+        self.init()
+        secretMode = container.value(.secretMode, default: fallback.secretMode)
+        tapCountTicks = container.value(.tapCountTicks, default: fallback.tapCountTicks)
+        rewindSteps = container.value(.rewindSteps, default: fallback.rewindSteps)
+        rewindFinish = container.value(.rewindFinish, default: fallback.rewindFinish)
     }
 }

@@ -1,9 +1,33 @@
 import SwiftUI
+import UIKit
 
-enum FontWeightOption: String, CaseIterable, Identifiable {
+enum FontWeightOption: String, CaseIterable, Identifiable, Codable {
     case ultraLight, thin, light, regular, medium, semibold, bold, heavy, black
 
     var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .ultraLight:
+            return "Ultrafino"
+        case .thin:
+            return "Fino"
+        case .light:
+            return "Leve"
+        case .regular:
+            return "Regular"
+        case .medium:
+            return "Médio"
+        case .semibold:
+            return "Seminegrito"
+        case .bold:
+            return "Negrito"
+        case .heavy:
+            return "Pesado"
+        case .black:
+            return "Black"
+        }
+    }
 
     var fontWeight: Font.Weight {
         switch self {
@@ -29,10 +53,23 @@ enum FontWeightOption: String, CaseIterable, Identifiable {
     }
 }
 
-enum FontDesignOption: String, CaseIterable, Identifiable {
+enum FontDesignOption: String, CaseIterable, Identifiable, Codable {
     case standard, rounded, serif, monospaced
 
     var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .standard:
+            return "Padrão"
+        case .rounded:
+            return "Arredondada"
+        case .serif:
+            return "Serifa"
+        case .monospaced:
+            return "Monoespaçada"
+        }
+    }
 
     var fontDesign: Font.Design {
         switch self {
@@ -59,6 +96,26 @@ struct RGBAColor: Equatable, Codable {
 
     var color: Color {
         Color(.sRGB, red: red, green: green, blue: blue, opacity: alpha)
+    }
+}
+
+extension RGBAColor {
+    /// Converte uma cor do ColorPicker (componentes limitados a 0...1).
+    init(_ color: Color) {
+        var red: CGFloat = 1
+        var green: CGFloat = 1
+        var blue: CGFloat = 1
+        var alpha: CGFloat = 1
+        if !UIColor(color).getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            red = 1
+            green = 1
+            blue = 1
+            alpha = 1
+        }
+        func clamp(_ value: CGFloat) -> Double {
+            Double(min(max(value, 0), 1))
+        }
+        self.init(red: clamp(red), green: clamp(green), blue: clamp(blue), alpha: clamp(alpha))
     }
 }
 
@@ -106,6 +163,30 @@ struct LockScreenStyle: Equatable {
 
     /// "Deslize para cima para abrir" na parte de baixo.
     var showsUnlockHint: Bool = false
+
+    /// Volta só os ajustes de calibração (tamanhos, pesos, posições) para o padrão,
+    /// mantendo textos, formatos e opções de conteúdo.
+    mutating func resetCalibration() {
+        let defaults = LockScreenStyle()
+        clockSize = defaults.clockSize
+        clockWeight = defaults.clockWeight
+        clockDesign = defaults.clockDesign
+        clockKerning = defaults.clockKerning
+        clockYOffset = defaults.clockYOffset
+        clockColor = defaults.clockColor
+        dateSize = defaults.dateSize
+        dateWeight = defaults.dateWeight
+        dateYOffset = defaults.dateYOffset
+        dateOpacity = defaults.dateOpacity
+        statusBarYOffset = defaults.statusBarYOffset
+        statusBarFontSize = defaults.statusBarFontSize
+        statusBarSideOffset = defaults.statusBarSideOffset
+        padlockYOffset = defaults.padlockYOffset
+        padlockSize = defaults.padlockSize
+        quickButtonSize = defaults.quickButtonSize
+        quickButtonBottomOffset = defaults.quickButtonBottomOffset
+        quickButtonSideOffset = defaults.quickButtonSideOffset
+    }
 }
 
 /// Posições (centro, em pt, coordenadas da tela inteira) de cada elemento.
@@ -167,5 +248,51 @@ struct LockScreenLayout {
     /// Zona onde o swipe de rewind pode começar: metade de baixo, acima dos 40pt finais.
     func isValidSwipeStart(_ point: CGPoint) -> Bool {
         point.y >= height / 2 && point.y <= height - 40
+    }
+}
+
+// MARK: - Codable tolerante (campos ausentes usam o padrão)
+
+extension LockScreenStyle: Codable {
+    enum CodingKeys: String, CodingKey {
+        case clockSize, clockWeight, clockDesign, clockKerning, clockYOffset, clockColor, clockFormat
+        case dateSize, dateWeight, dateYOffset, dateOpacity, dateFormat
+        case carrierName, signalBars, showsWiFi, showsBatteryPercentage, statusBarYOffset, statusBarFontSize, statusBarSideOffset
+        case showsPadlock, padlockYOffset, padlockSize
+        case quickButtonSize, quickButtonBottomOffset, quickButtonSideOffset
+        case wallpaperDim, showsUnlockHint
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = LockScreenStyle()
+        self.init()
+        clockSize = container.value(.clockSize, default: fallback.clockSize)
+        clockWeight = container.value(.clockWeight, default: fallback.clockWeight)
+        clockDesign = container.value(.clockDesign, default: fallback.clockDesign)
+        clockKerning = container.value(.clockKerning, default: fallback.clockKerning)
+        clockYOffset = container.value(.clockYOffset, default: fallback.clockYOffset)
+        clockColor = container.value(.clockColor, default: fallback.clockColor)
+        clockFormat = container.value(.clockFormat, default: fallback.clockFormat)
+        dateSize = container.value(.dateSize, default: fallback.dateSize)
+        dateWeight = container.value(.dateWeight, default: fallback.dateWeight)
+        dateYOffset = container.value(.dateYOffset, default: fallback.dateYOffset)
+        dateOpacity = container.value(.dateOpacity, default: fallback.dateOpacity)
+        dateFormat = container.value(.dateFormat, default: fallback.dateFormat)
+        carrierName = container.value(.carrierName, default: fallback.carrierName)
+        signalBars = container.value(.signalBars, default: fallback.signalBars)
+        showsWiFi = container.value(.showsWiFi, default: fallback.showsWiFi)
+        showsBatteryPercentage = container.value(.showsBatteryPercentage, default: fallback.showsBatteryPercentage)
+        statusBarYOffset = container.value(.statusBarYOffset, default: fallback.statusBarYOffset)
+        statusBarFontSize = container.value(.statusBarFontSize, default: fallback.statusBarFontSize)
+        statusBarSideOffset = container.value(.statusBarSideOffset, default: fallback.statusBarSideOffset)
+        showsPadlock = container.value(.showsPadlock, default: fallback.showsPadlock)
+        padlockYOffset = container.value(.padlockYOffset, default: fallback.padlockYOffset)
+        padlockSize = container.value(.padlockSize, default: fallback.padlockSize)
+        quickButtonSize = container.value(.quickButtonSize, default: fallback.quickButtonSize)
+        quickButtonBottomOffset = container.value(.quickButtonBottomOffset, default: fallback.quickButtonBottomOffset)
+        quickButtonSideOffset = container.value(.quickButtonSideOffset, default: fallback.quickButtonSideOffset)
+        wallpaperDim = container.value(.wallpaperDim, default: fallback.wallpaperDim)
+        showsUnlockHint = container.value(.showsUnlockHint, default: fallback.showsUnlockHint)
     }
 }

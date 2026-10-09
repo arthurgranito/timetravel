@@ -1,19 +1,60 @@
 import SwiftUI
 import UIKit
 
-/// Raiz: tela preta, tela de bloqueio falsa, e o ciclo de vida do app.
+/// Raiz: tela preta, tela de bloqueio falsa, configurações e o ciclo de vida do app.
 struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var controller = TrickController()
+    @State private var settings = AppSettings()
+    @State private var wallpapers = WallpaperStore()
     @State private var haptics = Haptics()
     @State private var torch = Torch()
     @State private var brightness = ScreenBrightness()
-    @State private var style = LockScreenStyle()
-    @State private var preferences = MagicPreferences()
+    /// Número sorteado pelo "Ensaiar" (grade visível até o rewind terminar).
+    @State private var rehearsalNumber: Int?
 
     var body: some View {
         let state = controller.state
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            if state == .settings {
+                SettingsView(
+                    settings: settings,
+                    wallpapers: wallpapers,
+                    onRehearse: {
+                        startRehearsal()
+                    },
+                    onClose: {
+                        controller.closeSettings()
+                    }
+                )
+            } else {
+                magicScreens(state: state)
+            }
+        }
+        .statusBarHidden(true)
+        .preferredColorScheme(.dark)
+        .onAppear {
+            configure()
+            brightness.save()
+            applyIdleTimer(active: true)
+        }
+        .onChange(of: settings.data) { _, _ in
+            settings.save()
+            configure()
+            applyIdleTimer(active: scenePhase == .active)
+        }
+        .onChange(of: state) { _, newState in
+            stateChanged(newState)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            handleScenePhase(phase)
+        }
+    }
+
+    private func magicScreens(state: TrickState) -> some View {
         GeometryReader { proxy in
             let metrics = ScreenMetrics(proxy: proxy)
             ZStack {
@@ -22,9 +63,9 @@ struct RootView: View {
                 if state.showsLockScreen {
                     LockScreenView(
                         controller: controller,
-                        style: style,
-                        preferences: preferences,
-                        wallpaper: nil,
+                        style: settings.data.style,
+                        preferences: settings.data.preferences,
+                        wallpaper: wallpapers.wallpaper,
                         metrics: metrics,
                         haptics: haptics,
                         torch: torch
@@ -33,54 +74,57 @@ struct RootView: View {
                 }
 
                 if state.isDark {
-                    DarkScreenView(controller: controller, preferences: preferences)
+                    DarkScreenView(
+                        controller: controller,
+                        preferences: darkScreenPreferences,
+                        settingsGesture: settings.data.settingsGesture,
+                        rehearsalNumber: rehearsalNumber
+                    )
                 }
             }
             .frame(width: metrics.size.width, height: metrics.size.height)
             .animation(state.showsLockScreen ? Animation.easeOut(duration: 0.25) : nil, value: state.showsLockScreen)
         }
         .ignoresSafeArea()
-        .background(Color.black)
-        .statusBarHidden(true)
-        .preferredColorScheme(.dark)
         .defersSystemGestures(on: .bottom)
         .dynamicTypeSize(.large)
         .environment(\.legibilityWeight, .regular)
-        .onAppear {
-            configure()
-            brightness.save()
-            applyIdleTimer(active: true)
+    }
+
+    /// No ensaio, a grade fica visível mesmo com o modo treino desligado.
+    private var darkScreenPreferences: MagicPreferences {
+        var preferences = settings.data.preferences
+        if rehearsalNumber != nil {
+            preferences.showsTrainingGrid = true
         }
-        .onChange(of: preferences) { _, _ in
-            configure()
-            applyIdleTimer(active: scenePhase == .active)
-        }
-        .onChange(of: state.isDark) { _, isDark in
-            if isDark {
-                brightness.save()
-            }
-        }
-        .onChange(of: state.showsLockScreen) { _, showsLock in
-            if showsLock {
-                brightness.applySaved()
-            }
-        }
-        .onChange(of: scenePhase) { _, phase in
-            handleScenePhase(phase)
-        }
+        return preferences
     }
 
     private func configure() {
-        var configuration = controller.configuration
-        configuration.autoRewindDelay = preferences.rewindTrigger == .automatic ? preferences.autoRewindDelay : nil
-        controller.updateConfiguration(configuration)
-
-        let hapticPreferences = preferences.haptics
+        controller.updateConfiguration(settings.data.trickConfiguration)
+        let hapticPreferences = settings.data.preferences.haptics
         let hapticsService = haptics
         controller.onFeedback = { feedback in
             hapticsService.handle(feedback, preferences: hapticPreferences)
         }
         hapticsService.prepare()
+    }
+
+    private func startRehearsal() {
+        rehearsalNumber = Int.random(in: settings.data.inputMode.validRange)
+        controller.closeSettings()
+    }
+
+    private func stateChanged(_ newState: TrickState) {
+        if newState.isDark {
+            brightness.save()
+        }
+        if newState.showsLockScreen {
+            brightness.applySaved()
+        }
+        if newState == .live || newState == .settings {
+            rehearsalNumber = nil
+        }
     }
 
     private func handleScenePhase(_ phase: ScenePhase) {
@@ -100,6 +144,6 @@ struct RootView: View {
     }
 
     private func applyIdleTimer(active: Bool) {
-        UIApplication.shared.isIdleTimerDisabled = active && preferences.keepScreenAwake
+        UIApplication.shared.isIdleTimerDisabled = active && settings.data.preferences.keepScreenAwake
     }
 }

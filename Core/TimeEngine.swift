@@ -104,3 +104,34 @@ final class DateFormatterCache {
         return formatter
     }
 }
+
+// MARK: - Codable tolerante (campos ausentes usam o padrão)
+
+extension ClockFormatOptions: Codable {
+    enum CodingKeys: String, CodingKey {
+        case uses24Hour, leadingZeroHour
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = ClockFormatOptions()
+        self.init()
+        uses24Hour = container.value(.uses24Hour, default: fallback.uses24Hour)
+        leadingZeroHour = container.value(.leadingZeroHour, default: fallback.leadingZeroHour)
+    }
+}
+
+extension DateFormatOptions: Codable {
+    enum CodingKeys: String, CodingKey {
+        case format, localeIdentifier, capitalizeFirstLetter
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = DateFormatOptions()
+        self.init()
+        format = container.value(.format, default: fallback.format)
+        localeIdentifier = container.value(.localeIdentifier, default: fallback.localeIdentifier)
+        capitalizeFirstLetter = container.value(.capitalizeFirstLetter, default: fallback.capitalizeFirstLetter)
+    }
+}

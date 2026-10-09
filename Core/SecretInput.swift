@@ -2,7 +2,7 @@ import Foundation
 import CoreGraphics
 
 /// Modo de entrada secreta do número.
-enum SecretInputMode: String, CaseIterable, Identifiable {
+enum SecretInputMode: String, CaseIterable, Identifiable, Codable {
     /// Modo A: grade 3x3 (1 a 9).
     case grid
     /// Modo B: contagem de toques (1 a 30), confirmada com toque longo.
@@ -11,6 +11,17 @@ enum SecretInputMode: String, CaseIterable, Identifiable {
     case twoStepGrid
 
     var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .grid:
+            return "A · Grade 3x3 (1–9)"
+        case .tapCount:
+            return "B · Contagem de toques (1–30)"
+        case .twoStepGrid:
+            return "C · Grade em duas etapas (1–59)"
+        }
+    }
 
     var validRange: ClosedRange<Int> {
         switch self {

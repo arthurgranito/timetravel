@@ -1,7 +1,7 @@
 import Foundation
 
 /// Como o rewind é disparado na tela de bloqueio.
-enum RewindTrigger: String, CaseIterable, Identifiable {
+enum RewindTrigger: String, CaseIterable, Identifiable, Codable {
     /// Swipe para cima na metade inferior (padrão).
     case swipeUp
     /// Toque duplo no relógio.
@@ -49,4 +49,43 @@ struct MagicPreferences: Equatable {
     /// Toque longo no estado "live" volta para o preto.
     var liveResetEnabled: Bool = true
     var liveResetDuration: TimeInterval = 1.5
+}
+
+// MARK: - Codable tolerante (campos ausentes usam o padrão)
+
+extension MagicPreferences: Codable {
+    enum CodingKeys: String, CodingKey {
+        case haptics, showsSecretIndicator, showsTrainingGrid, rewindTrigger, autoRewindDelay, effects
+        case keepScreenAwake, liveResetEnabled, liveResetDuration
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = MagicPreferences()
+        self.init()
+        haptics = container.value(.haptics, default: fallback.haptics)
+        showsSecretIndicator = container.value(.showsSecretIndicator, default: fallback.showsSecretIndicator)
+        showsTrainingGrid = container.value(.showsTrainingGrid, default: fallback.showsTrainingGrid)
+        rewindTrigger = container.value(.rewindTrigger, default: fallback.rewindTrigger)
+        autoRewindDelay = container.value(.autoRewindDelay, default: fallback.autoRewindDelay)
+        effects = container.value(.effects, default: fallback.effects)
+        keepScreenAwake = container.value(.keepScreenAwake, default: fallback.keepScreenAwake)
+        liveResetEnabled = container.value(.liveResetEnabled, default: fallback.liveResetEnabled)
+        liveResetDuration = container.value(.liveResetDuration, default: fallback.liveResetDuration)
+    }
+}
+
+extension RewindEffects: Codable {
+    enum CodingKeys: String, CodingKey {
+        case glitch, wallpaperZoom, padlockOpens
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = RewindEffects()
+        self.init()
+        glitch = container.value(.glitch, default: fallback.glitch)
+        wallpaperZoom = container.value(.wallpaperZoom, default: fallback.wallpaperZoom)
+        padlockOpens = container.value(.padlockOpens, default: fallback.padlockOpens)
+    }
 }

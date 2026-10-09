@@ -4,6 +4,9 @@ import SwiftUI
 struct DarkScreenView: View {
     let controller: TrickController
     let preferences: MagicPreferences
+    var settingsGesture: SettingsGesture = .threeTwoFingerTaps
+    /// Número sorteado no modo "Ensaiar" (mostra a grade e o número a fazer).
+    var rehearsalNumber: Int? = nil
 
     @State private var canvas = InputCanvas(size: .zero)
     @State private var indicatorVisible = false
@@ -15,7 +18,7 @@ struct DarkScreenView: View {
             Color.black
 
             if preferences.showsTrainingGrid && canvas.size.width > 0 {
-                TrainingOverlay(controller: controller, canvas: canvas)
+                TrainingOverlay(controller: controller, canvas: canvas, rehearsalNumber: rehearsalNumber)
                     .allowsHitTesting(false)
             }
 
@@ -33,6 +36,7 @@ struct DarkScreenView: View {
             SecretTouchSurface(
                 longPressDuration: 0.6,
                 resetDuration: 1.5,
+                settingsGesture: settingsGesture,
                 onTap: { point, touchCanvas in
                     controller.handleTap(at: point, in: touchCanvas)
                 },
@@ -41,6 +45,9 @@ struct DarkScreenView: View {
                 },
                 onTwoFingerLongPress: {
                     controller.handleResetGesture()
+                },
+                onSettingsGesture: {
+                    controller.openSettings()
                 },
                 onCanvasChange: { newCanvas in
                     canvas = newCanvas
@@ -72,6 +79,7 @@ struct DarkScreenView: View {
 struct TrainingOverlay: View {
     let controller: TrickController
     let canvas: InputCanvas
+    var rehearsalNumber: Int? = nil
 
     var body: some View {
         let mode = controller.configuration.inputMode
@@ -112,15 +120,16 @@ struct TrainingOverlay: View {
     }
 
     private var statusText: String {
+        let prefix = rehearsalNumber.map { "ENSAIO · faça o \($0)" } ?? "TREINO"
         switch controller.secretInput.phase {
         case .empty:
-            return "TREINO"
+            return prefix
         case let .counting(count):
-            return "TREINO · \(count) toques"
+            return "\(prefix) · \(count) toques"
         case let .tens(tens):
-            return "TREINO · dezena \(tens)"
+            return "\(prefix) · dezena \(tens)"
         case let .armed(value):
-            return "TREINO · armado \(value)"
+            return "\(prefix) · armado \(value)"
         }
     }
 }

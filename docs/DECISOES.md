@@ -44,3 +44,14 @@ Formato: **contexto → decisão → motivo**.
 - **Transição de acordar** → fade de 0,25s do preto para a tela de bloqueio + wallpaper 1,03 → 1,0 em 0,35s. Voltar para o preto é instantâneo (como apagar a tela).
 - **Acessibilidade** → as telas da mágica usam tamanhos fixos, `dynamicTypeSize(.large)` e `legibilityWeight = .regular` → "Texto em negrito" e tamanho de fonte do sistema não alteram nada.
 - **Preferências provisórias** → `MagicPreferences` e `LockScreenStyle` usam os valores padrão por enquanto; na Fase 4 passam a vir do `AppSettings`.
+
+## Fase 4 — Configurações e calibração
+
+- **Persistência** → todas as configurações num único JSON (`AppSettingsData`) no UserDefaults, chave `settings.v1` (enum `SettingsKey`). Os padrões ficam nos próprios structs. A decodificação é **tolerante**: campo ausente ou inválido usa o padrão → uma atualização do app que adicione opções nunca apaga suas configurações/calibração. Salva automaticamente a cada mudança.
+- **Imagens** → wallpaper e print de calibração salvos como JPEG (qualidade 0,92, maior lado ≤ 3000 px, orientação corrigida) em `Documents/` pelo `WallpaperStore`.
+- **Gesto das configurações** → padrão: **3 toques com 2 dedos em até 1,5s** (contados no código, porque o multi-toque nativo do UIKit exige toques muito rápidos). Alternativa: segurar 3s no canto superior esquerdo (100×100 pt abaixo da safe area). Só funciona na tela preta.
+- **Calibração** → tela cheia com a tela falsa + o print por cima (opacidade ajustável, botão "segure para ver o print"), e um painel inferior arrastável que deixa a tela visível e tocável. A hora é congelada num valor escolhido (DatePicker), para bater com o print. "Restaurar padrões" volta só os ajustes de calibração (mantém operadora, formatos etc.).
+- **Seletor de print** → o PhotosPicker da calibração filtra **capturas de tela**, o do wallpaper filtra imagens.
+- **Desenho compartilhado** → `LockScreenCanvas` desenha a tela de bloqueio para um minuto qualquer; a mágica e a calibração usam exatamente o mesmo código → o que você calibra é o que aparece na apresentação.
+- **Ensaiar** → sorteia um número dentro da faixa do modo atual, fecha as configurações e mostra a grade com "ENSAIO · faça o N" na tela preta; a grade some quando o rewind termina.
+- **Tema das configurações** → também escuro (o app inteiro é forçado no escuro), e sem status bar.
