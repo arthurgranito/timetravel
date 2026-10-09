@@ -27,6 +27,7 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: App
+      - path: Core
       - path: Resources
     settings:
       base:
@@ -65,12 +66,34 @@ targets:
         NSPhotoLibraryUsageDescription: "Usado para escolher o papel de parede e a imagem de calibração."
         NSCameraUsageDescription: "Usado apenas para ligar a lanterna."
 
+  TimeRewindTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Tests
+    dependencies:
+      - target: TimeRewind
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.magic.timerewind.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/TimeRewind.app/TimeRewind"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
 schemes:
   TimeRewind:
     build:
       targets:
         TimeRewind: all
+        TimeRewindTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - TimeRewindTests
     archive:
       config: Release

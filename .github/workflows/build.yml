@@ -85,3 +85,54 @@ jobs:
             fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  tests:
+    name: Testes unitários (simulador)
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Diagnóstico do Xcode
+        run: |
+          xcodebuild -version
+          ls /Applications | grep Xcode || true
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      - name: Gerar projeto
+        run: xcodegen generate
+
+      - name: Rodar testes
+        run: |
+          set -o pipefail
+          UDID=$(python3 scripts/pick_simulator.py "iPhone 15")
+          xcodebuild test -project TimeRewind.xcodeproj -scheme TimeRewind -configuration Debug \
+            -destination "id=$UDID" \
+            -derivedDataPath build-tests \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee test.log
+
+      - name: Upload test.log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log-${{ github.run_number }}
+          path: test.log
+          if-no-files-found: ignore
+
+      - name: Resumo de falhas
+        if: failure()
+        run: |
+          {
+            echo "## Falhas nos testes / compilação"
+            echo '```'
+            if [ -f test.log ]; then
+              grep -nE "error:|failed|FAILED" test.log | head -80 || echo "Nenhuma linha de erro encontrada no test.log."
+            else
+              echo "test.log não existe (a falha aconteceu antes do xcodebuild test)."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
